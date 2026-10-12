@@ -24,6 +24,7 @@ jobs:
         env:
           CI: 'false'
           REACT_APP_STATIC_DEMO: 'true'
+          PUBLIC_URL: '/Krishisetu'
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
