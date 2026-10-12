@@ -305,6 +305,15 @@ async function main() {
         // Create tables first
         await createTables();
 
+        // Do not append duplicate records to tables that already contain data.
+        // Reimports require an explicit migration/backup strategy, not blind inserts.
+        for (const table of ['pest_data', 'bhandara_weather', 'raigad_weather', 'ratnagiri_weather']) {
+            const rows = await executeQuery(`SELECT COUNT(*) AS count FROM \`${table}\``);
+            if (Number(rows[0].count) > 0) {
+                throw new Error(`Import stopped: ${table} already contains ${rows[0].count} rows. Backup and plan a controlled reimport instead.`);
+            }
+        }
+
         // Import pest data CSV
         await importCSV(
             './pest data.csv',
