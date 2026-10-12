@@ -229,25 +229,26 @@ app.get('/api/ratnagiri-weather', async (req, res) => {
   }
 });
 
-// ML API health check
+// Upstream readiness: do not mark ML connected unless it returns HTTP 2xx.
 app.get('/api/ml-health', (req, res) => {
-  const options = {
-    hostname: ML_API_HOST,
-    port: ML_API_PORT,
-    path: '/health',
-    method: 'GET'
-  };
-  const req2 = http.request(options, (proxyRes) => {
-    let data = '';
-    proxyRes.on('data', chunk => { data += chunk; });
-    proxyRes.on('end', () => {
-      try { res.json({ ml_api: 'connected', ...JSON.parse(data) }); }
-      catch { res.json({ ml_api: 'connected' }); }
+  const request = http.get({
+    hostname: ML_API_HOST, port: ML_API_PORT, path: '/health', timeout: 10000
+  }, (upstream) => {
+    const successful = upstream.statusCode >= 200 && upstream.statusCode < 300;
+    // Consume response without relaying arbitrary upstream body to public clients.
+    upstream.resume();
+    upstream.on('end', () => {
+      if (!res.headersSent) {
+        res.status(successful ? 200 : 503).json({
+          ml_api: successful ? 'connected' : 'offline'
+        });
+      }
     });
   });
-  req2.on('error', () => res.status(503).json({ ml_api: 'offline', message: 'Prediction service unavailable' }));
-  req2.setTimeout(10000, () => req2.destroy(new Error('ML service timeout')));
-  req2.end();
+  request.on('timeout', () => request.destroy(new Error('ML timeout')));
+  request.on('error', () => {
+    if (!res.headersSent) res.status(503).json({ ml_api: 'offline' });
+  });
 });
 
 // Proxy endpoint to Python ML API for pest prediction
