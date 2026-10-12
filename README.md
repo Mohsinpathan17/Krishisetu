@@ -1,70 +1,47 @@
-# Getting Started with Create React App
+# KrishiSetu — Kharif Crop Pest Risk Research Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A responsive web interface for research-driven pest outbreak monitoring in Maharashtra. The website connects an Express API to MySQL agricultural records and a separately deployed Python machine-learning inference service.
 
-## Available Scripts
+**Deployment status:** Source is prepared for deployment, but **no public working site has been verified yet**. Prediction results depend on the original Python model server and model assets. Never present the interface as an already validated production prediction system.
 
-In the project directory, you can run:
+## Features
+- Responsive research landing page and crop-monitoring information
+- Interactive form for district, crop, temperature, humidity, and rainfall
+- Prediction requests sent to `POST /api/predict` (no fabricated fallback)
+- Searchable district records from `GET /api/pest-data`
+- Separate web, database, and ML service availability indicators
+- Research context and limitations
 
-### `npm start`
+## Stack
+React 19, Create React App, Express 4, MySQL, Python ML API (separate runtime).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Develop
+```bash
+npm ci
+npm start
+```
+The Express service runs with `npm run server`. Copy `.env.example` to a local `.env`, supply a functioning MySQL service, and launch the original Python inference server separately. The existing React development proxy references localhost:5002; align it with the port used by your Express backend.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Production build
+```bash
+npm ci
+CI=false npm run build
+node server.js
+```
+The Express server serves the React build and API on the same origin. The `CI=false` command is only a local troubleshooting option; the CI pipeline runs a normal strict build.
 
-### `npm test`
+For environment variables, infrastructure dependencies, and validation steps, see [DEPLOYMENT.md](DEPLOYMENT.md) and [render.yaml](render.yaml).
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Key API endpoints
+- `GET /api/health`: web-server liveness
+- `GET /api/ready`: MySQL readiness
+- `GET /api/ml-health`: prediction-service availability
+- `POST /api/predict`: proxy to the original Python model server
+- `GET /api/pest-data`: agricultural record retrieval
 
-### `npm run build`
+**Important model integration note:** The example interface submits location, crop, temperature, humidity, and rainfall. The original Python prediction service's accepted schema has not yet been verified from its source; reconcile input fields before using the public prediction form as a validated scientific instrument.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Research
+Pest Outbreak Prediction for Kharif Crops Using Machine Learning (presented at ICRTSET-2026). The model output is research-oriented decision support, not a replacement for agronomist guidance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Maintainer: [Mohsin Pathan](https://github.com/Mohsinpathan17).
