@@ -38,7 +38,9 @@
     "init-db": "node init-db.js",
     "import-data": "node import.js",
     "test-db": "node test-db-connection.js",
-    "start:production": "node server.js"
+    "start:production": "node server.js",
+    "validate-data": "node validate-data.js",
+    "import-data:safe": "npm run validate-data && npm run import-data"
   },
   "eslintConfig": {
     "extends": [
