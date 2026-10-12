@@ -93,7 +93,7 @@ app.get('/api/pest-data', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Error fetching pest data:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Unable to process the request.' });
   }
 });
 
@@ -137,7 +137,7 @@ app.get('/api/bhandara-weather', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Error fetching Bhandara weather data:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Unable to process the request.' });
   }
 });
 
@@ -181,7 +181,7 @@ app.get('/api/raigad-weather', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Error fetching Raigad weather data:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Unable to process the request.' });
   }
 });
 
@@ -225,15 +225,15 @@ app.get('/api/ratnagiri-weather', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Error fetching Ratnagiri weather data:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Unable to process the request.' });
   }
 });
 
 // ML API health check
 app.get('/api/ml-health', (req, res) => {
   const options = {
-    hostname: '127.0.0.1',
-    port: 5001,
+    hostname: ML_API_HOST,
+    port: ML_API_PORT,
     path: '/health',
     method: 'GET'
   };
@@ -255,8 +255,8 @@ app.post('/api/predict', async (req, res) => {
   try {
     const postData = JSON.stringify(req.body);
     const options = {
-      hostname: '127.0.0.1',
-      port: 5001,
+      hostname: ML_API_HOST,
+    port: ML_API_PORT,
       path: '/predict',
       method: 'POST',
       headers: {
@@ -266,14 +266,13 @@ app.post('/api/predict', async (req, res) => {
     };
 
     const proxyReq = http.request(options, (proxyRes) => {
-      res.status(proxyRes.statusCode || 502);
       let data = '';
       proxyRes.on('data', (chunk) => { data += chunk; });
       proxyRes.on('end', () => {
         try {
-          res.json(JSON.parse(data));
+          res.status(proxyRes.statusCode || 502).json(JSON.parse(data));
         } catch (e) {
-          res.status(500).json({ error: 'Invalid response from ML service' });
+          res.status(502).json({ error: 'Invalid response from ML service' });
         }
       });
     });
@@ -286,7 +285,7 @@ app.post('/api/predict', async (req, res) => {
     proxyReq.write(postData);
     proxyReq.end();
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Unable to process the request.' });
   }
 });
 
