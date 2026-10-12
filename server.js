@@ -10,13 +10,17 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const ML_API_HOST = process.env.ML_API_HOST || '127.0.0.1';
+const ML_API_PORT = Number(process.env.ML_API_PORT || 5001);
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:3001')
+  .split(',').map(origin => origin.trim()).filter(Boolean);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
 // Serve static files from the React app build folder
 app.use(express.static(path.join(__dirname, 'build')));
@@ -24,25 +28,19 @@ app.use(express.static(path.join(__dirname, 'build')));
 // Import database connection
 const db = require('./db');
 
-// Test route for MySQL connection
-app.get('/api/health', async (req, res) => {
+// Liveness: web process is running. Does not imply DB/ML readiness.
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'krishisetu-web', timestamp: new Date().toISOString() });
+});
+
+// Readiness: database is reachable. Report failures with a non-200 status.
+app.get('/api/ready', async (req, res) => {
   try {
-    // Test the database connection
-    const [rows] = await db.promise().execute('SELECT NOW() as currentTime');
-    res.json({
-      status: 'OK',
-      currentTime: rows[0].currentTime,
-      database: 'Connected'
-    });
+    await db.promise().query('SELECT 1');
+    res.json({ status: 'ready', database: 'connected' });
   } catch (error) {
-    console.error('Database connection error:', error);
-    // Still return success but indicate DB issue
-    res.json({
-      status: 'OK',
-      currentTime: new Date().toISOString(),
-      database: 'Not connected - Check MySQL server and credentials',
-      error: error.message
-    });
+    console.error('Database readiness check failed:', error.message);
+    res.status(503).json({ status: 'unavailable', database: 'disconnected' });
   }
 });
 
@@ -247,7 +245,8 @@ app.get('/api/ml-health', (req, res) => {
       catch { res.json({ ml_api: 'connected' }); }
     });
   });
-  req2.on('error', () => res.json({ ml_api: 'offline', message: 'Start Python ML API: cd "Pest project" && python ml_api.py' }));
+  req2.on('error', () => res.status(503).json({ ml_api: 'offline', message: 'Prediction service unavailable' }));
+  req2.setTimeout(10000, () => req2.destroy(new Error('ML service timeout')));
   req2.end();
 });
 
@@ -267,6 +266,7 @@ app.post('/api/predict', async (req, res) => {
     };
 
     const proxyReq = http.request(options, (proxyRes) => {
+      res.status(proxyRes.statusCode || 502);
       let data = '';
       proxyRes.on('data', (chunk) => { data += chunk; });
       proxyRes.on('end', () => {
@@ -279,9 +279,10 @@ app.post('/api/predict', async (req, res) => {
     });
 
     proxyReq.on('error', () => {
-      res.status(503).json({ error: 'ML service unavailable. Make sure the Python API is running on port 5001.' });
+      res.status(503).json({ error: 'ML prediction service unavailable.' });
     });
 
+    proxyReq.setTimeout(15000, () => proxyReq.destroy(new Error('ML service timeout')));
     proxyReq.write(postData);
     proxyReq.end();
   } catch (error) {
