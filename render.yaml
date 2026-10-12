@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: krishisetu-web
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ML_API_HOST
+        sync: false
+      - key: ML_API_PORT
+        value: "5001"
+      - key: CORS_ORIGINS
+        sync: false
+# This blueprint deploys the React+Express web process only.
+# Supply a separate reachable Python ML API and MySQL instance.
+# Verify provider plan availability/pricing before deployment.
