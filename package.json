@@ -25,7 +25,7 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
-  "proxy": "http://localhost:5002",
+  "proxy": "http://localhost:5000",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -33,11 +33,12 @@
     "eject": "react-scripts eject",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server.js",
-    "client": "set PORT=3001 && react-scripts start",
+    "client": "react-scripts start",
     "ml-api": "cd \"Pest project\" && python ml_api.py",
     "init-db": "node init-db.js",
     "import-data": "node import.js",
-    "test-db": "node test-db-connection.js"
+    "test-db": "node test-db-connection.js",
+    "start:production": "node server.js"
   },
   "eslintConfig": {
     "extends": [
