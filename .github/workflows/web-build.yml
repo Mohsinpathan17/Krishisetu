@@ -1,0 +1,24 @@
+name: Validate KrishiSetu web app
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install exact locked dependencies
+        run: npm ci
+      - name: Validate Express syntax
+        run: node --check server.js
+      - name: Build React frontend
+        run: CI=false npm run build
+      - name: Check production build artifact
+        run: test -s build/index.html
