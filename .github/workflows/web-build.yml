@@ -19,6 +19,6 @@ jobs:
       - name: Validate Express syntax
         run: node --check server.js
       - name: Build React frontend
-        run: CI=false npm run build
+        run: CI=true npm run build
       - name: Check production build artifact
         run: test -s build/index.html
