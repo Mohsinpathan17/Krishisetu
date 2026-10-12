@@ -33,7 +33,7 @@ export default function App() {
     check('/api/ready','database');
     check('/api/ml-health','ml');
     return () => { mounted = false; };
-  }, []);
+  }, [demoMode]);
   const field = (key, value) => setForm(v => ({...v,[key]:value}));
   async function predict(e) {
     e.preventDefault();
